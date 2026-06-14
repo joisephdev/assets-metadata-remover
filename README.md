@@ -210,6 +210,20 @@ make publish-test   # Upload to TestPyPI
 make test           # Run smoke tests
 ```
 
+### CI/CD
+
+This project uses GitHub Actions for automated releases:
+
+1. **Push to main** → Triggers the release workflow
+2. **Semantic Release** → Analyzes conventional commits and determines version bump
+3. **Build & Publish** → Builds package and publishes to PyPI
+4. **GitHub Release** → Creates a new release with changelog
+
+Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
+- `feat:` → Minor version bump (1.0.0 → 1.1.0)
+- `fix:` → Patch version bump (1.0.0 → 1.0.1)
+- `feat!:` or `BREAKING CHANGE:` → Major version bump (1.0.0 → 2.0.0)
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
@@ -220,32 +234,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Changelog
 
-### v1.5.0 (2026-06-14)
-- Added GPS location extraction with consolidated coordinates in decimal format
-- Display Google Maps link for photos with GPS data
-- Enhanced `read` command output with location summary
-- Added `location` field to JSON output with latitude, longitude, and maps link
-
-### v1.4.0 (2026-06-14)
-- Improved README with badges, multi-platform installation, and real output examples
-- Added comprehensive changelog
-- Enhanced documentation with quick start guide
-
-### v1.3.0 (2026-06-14)
-- Added `--report` flag to `clean` command to show metadata removal tables
-- Added total metadata fields removed count in summary
-- Filter out `_original` backup files from directory scans
-
-### v1.2.0 (2026-06-14)
-- Added `read` command to display metadata from files
-- Support for table and JSON output formats
-- Graceful handling of missing tools
-
-### v1.1.0 (2026-06-14)
-- Refactored to subcommand architecture (`read` and `clean`)
-- Extracted shared utilities to separate module
-
-### v1.0.0 (2026-06-14)
-- Initial release
-- Remove metadata from images and videos recursively
-- Support for exiftool and ffmpeg
+See [CHANGELOG.md](CHANGELOG.md) for release history.

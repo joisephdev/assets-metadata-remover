@@ -214,15 +214,26 @@ make test           # Run smoke tests
 
 This project uses GitHub Actions for automated releases:
 
-1. **Push to main** → Triggers the release workflow
-2. **Semantic Release** → Analyzes conventional commits and determines version bump
-3. **Build & Publish** → Builds package and publishes to PyPI
-4. **GitHub Release** → Creates a new release with changelog
+1. **Push to main** → CI runs tests across Python 3.9-3.12
+2. **Create tag** → Triggers release workflow:
+   - Validates tag matches package version
+   - Builds and publishes to PyPI
+   - Creates GitHub Release with auto-generated notes
 
-Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
-- `feat:` → Minor version bump (1.0.0 → 1.1.0)
-- `fix:` → Patch version bump (1.0.0 → 1.0.1)
-- `feat!:` or `BREAKING CHANGE:` → Major version bump (1.0.0 → 2.0.0)
+**Release process:**
+```bash
+# 1. Update version in pyproject.toml and __init__.py
+# 2. Commit and push to main
+git add .
+git commit -m "chore: bump version to 1.6.0"
+git push origin main
+
+# 3. Create and push tag
+git tag v1.6.0
+git push origin v1.6.0
+```
+
+The tag triggers automatic build, PyPI publish, and GitHub release creation.
 
 ## License
 

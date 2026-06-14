@@ -1,10 +1,23 @@
-# metadata-remover
+# assets-metadata-remover
 
 Command-line tool that removes metadata from images and videos recursively, generating clean copies in an output folder that mirrors the original structure. Original files are **never** modified.
 
-## Requirements
+## Installation
 
-- **Python 3.9+** (uses only the standard library, no pip dependencies)
+### With pipx (recommended)
+
+```bash
+pipx install assets-metadata-remover
+```
+
+### With pip
+
+```bash
+pip install assets-metadata-remover
+```
+
+### System dependencies
+
 - **ffmpeg** — required for video processing
 - **exiftool** — required for image processing
 
@@ -16,18 +29,20 @@ brew install ffmpeg exiftool
 
 > If a tool is missing, the script detects it at startup and processes only the files it can, showing a clear warning.
 
-## Basic usage
+## Commands
+
+### clean — Remove metadata
 
 ```bash
-python3 metadata_remover.py /path/to/your_files
+assets-metadata-remover clean /path/to/your_files
 ```
 
 This creates `/path/to/your_files_clean/` with the same folder structure and metadata-free files.
 
-### Options
+#### Options
 
 ```
-usage: metadata_remover.py [-h] [-o OUTPUT] [--dry-run] [-v] [--verify] input
+usage: assets-metadata-remover clean [-h] [-o OUTPUT] [--dry-run] [-v] [--verify] input
 
 positional:
   input              Directory (or file) to process
@@ -39,30 +54,70 @@ options:
   --verify           Re-inspect copies and report residual metadata
 ```
 
-### Examples
+#### Examples
 
 Process a directory with custom output:
 
 ```bash
-python3 metadata_remover.py ~/Photos -o ~/Photos_clean
+assets-metadata-remover clean ~/Photos -o ~/Photos_clean
 ```
 
 Simulate without writing (dry run):
 
 ```bash
-python3 metadata_remover.py ~/Photos --dry-run
+assets-metadata-remover clean ~/Photos --dry-run
 ```
 
 Verbose mode with cleanup verification:
 
 ```bash
-python3 metadata_remover.py ~/Photos -v --verify
+assets-metadata-remover clean ~/Photos -v --verify
 ```
 
 Process a single file:
 
 ```bash
-python3 metadata_remover.py ~/photo.jpg -o ~/clean/
+assets-metadata-remover clean ~/photo.jpg -o ~/clean/
+```
+
+### read — Display metadata
+
+```bash
+assets-metadata-remover read /path/to/your_files
+```
+
+Displays metadata from images and videos in a human-readable table format.
+
+#### Options
+
+```
+usage: assets-metadata-remover read [-h] [--json] input
+
+positional:
+  input              Directory (or file) to inspect
+
+options:
+  --json             Output as JSON
+```
+
+#### Examples
+
+Read metadata from a single file:
+
+```bash
+assets-metadata-remover read ~/photo.jpg
+```
+
+Read metadata from a directory:
+
+```bash
+assets-metadata-remover read ~/Photos
+```
+
+Output as JSON for programmatic use:
+
+```bash
+assets-metadata-remover read ~/Photos --json
 ```
 
 ## Safety

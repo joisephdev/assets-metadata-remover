@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "assets-metadata-remover"
+version = "1.2.0"
+description = "Remove metadata from images and videos recursively"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+    { name = "Synapsync" }
+]
+keywords = ["metadata", "exif", "privacy", "images", "videos"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Security",
+]
+
+[project.scripts]
+assets-metadata-remover = "metadata_remover.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/synapsync/assets-metadata-remover"
+Repository = "https://github.com/synapsync/assets-metadata-remover"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/metadata_remover"]

@@ -1,60 +1,37 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".tiff", ".tif", ".webp", ".heic", ".heif", ".gif", ".bmp"}
-VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".avi", ".m4v", ".webm", ".wmv", ".flv", ".3gp"}
+from metadata_remover.utils import IMAGE_EXTS, VIDEO_EXTS, check_tools, collect_files
+from metadata_remover.metadata import read_metadata
+from metadata_remover.formatters import format_table, format_json
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Remove metadata from images and videos recursively."
+        description="Read or remove metadata from images and videos."
     )
-    parser.add_argument("input", help="Directory (or file) to process")
-    parser.add_argument("-o", "--output", help="Output directory (default: <input>_clean)")
-    parser.add_argument("--dry-run", action="store_true", help="Simulate without writing")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Per-file logging")
-    parser.add_argument("--verify", action="store_true", help="Re-inspect copies and report residual metadata")
-    return parser.parse_args()
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    read_parser = subparsers.add_parser("read", help="Display metadata from files")
+    read_parser.add_argument("input", help="Directory (or file) to inspect")
+    read_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
-def check_tools():
-    return {
-        "exiftool": shutil.which("exiftool") is not None,
-        "ffmpeg": shutil.which("ffmpeg") is not None,
-        "ffprobe": shutil.which("ffprobe") is not None,
-    }
+    clean_parser = subparsers.add_parser("clean", help="Remove metadata from files")
+    clean_parser.add_argument("input", help="Directory (or file) to process")
+    clean_parser.add_argument("-o", "--output", help="Output directory (default: <input>_clean)")
+    clean_parser.add_argument("--dry-run", action="store_true", help="Simulate without writing")
+    clean_parser.add_argument("-v", "--verbose", action="store_true", help="Per-file logging")
+    clean_parser.add_argument("--verify", action="store_true", help="Re-inspect copies and report residual metadata")
 
-
-def collect_files(root):
-    root = Path(root).resolve()
-    results = []
-    if root.is_file():
-        ext = root.suffix.lower()
-        if ext in IMAGE_EXTS:
-            results.append((root, "image"))
-        elif ext in VIDEO_EXTS:
-            results.append((root, "video"))
-        else:
-            results.append((root, "unsupported"))
-        return results
-
-    for dirpath, dirnames, filenames in os.walk(str(root), followlinks=False):
-        dirnames[:] = [d for d in dirnames if not os.path.islink(os.path.join(dirpath, d))]
-        for fname in filenames:
-            fpath = Path(dirpath) / fname
-            ext = fpath.suffix.lower()
-            if ext in IMAGE_EXTS:
-                results.append((fpath, "image"))
-            elif ext in VIDEO_EXTS:
-                results.append((fpath, "video"))
-            else:
-                results.append((fpath, "unsupported"))
-    return results
+    args = parser.parse_args()
+    if args.command is None:
+        parser.print_help()
+        sys.exit(0)
+    return args
 
 
 def clean_image(src, dst):
@@ -145,8 +122,7 @@ def print_summary(stats):
     print()
 
 
-def main():
-    args = parse_args()
+def main_clean(args):
     input_path = Path(args.input).resolve()
 
     if not input_path.exists():
@@ -267,6 +243,61 @@ def main():
             print(f"  ERROR: {src}: {e}", file=sys.stderr)
 
     print_summary(stats)
+
+
+def main_read(args):
+    input_path = Path(args.input).resolve()
+
+    if not input_path.exists():
+        print(f"Error: '{args.input}' does not exist.", file=sys.stderr)
+        sys.exit(2)
+
+    tools = check_tools()
+
+    if not tools["exiftool"]:
+        print("WARNING: exiftool not found. Images will be skipped.")
+        print("  Install with: brew install exiftool")
+        print()
+    if not tools["ffprobe"]:
+        print("WARNING: ffprobe not found. Videos will be skipped.")
+        print("  Install with: brew install ffmpeg  (includes ffprobe)")
+        print()
+
+    files = collect_files(input_path)
+    json_results = [] if args.json else None
+
+    for src, category in files:
+        if category == "unsupported":
+            continue
+
+        if category == "image" and not tools["exiftool"]:
+            continue
+
+        if category == "video" and not tools["ffprobe"]:
+            continue
+
+        try:
+            metadata = read_metadata(src, category)
+
+            if args.json:
+                json_results.append({"file": str(src), "metadata": metadata})
+            else:
+                print(format_table(src, metadata))
+
+        except Exception as e:
+            print(f"  ERROR: {src}: {e}", file=sys.stderr)
+
+    if args.json:
+        import json
+        print(json.dumps(json_results, indent=2, ensure_ascii=False))
+
+
+def main():
+    args = parse_args()
+    if args.command == "clean":
+        main_clean(args)
+    elif args.command == "read":
+        main_read(args)
 
 
 if __name__ == "__main__":

@@ -1,13 +1,13 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
 
 jobs:
-  build-and-test:
+  build-and-verify:
     runs-on: ubuntu-latest
 
     strategy:
@@ -27,10 +27,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
+      - name: Verify version sources are in sync
+        if: matrix.python-version == '3.12'
+        run: |
+          PYPROJECT_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          PACKAGE_VERSION=$(python -c "from metadata_remover import __version__; print(__version__)")
+          if [ "${PYPROJECT_VERSION}" != "${PACKAGE_VERSION}" ]; then
+            echo "pyproject.toml (${PYPROJECT_VERSION}) and __init__.py (${PACKAGE_VERSION}) are out of sync"
+            exit 1
+          fi
+
       - name: Build package
         run: |
-          pip install build
+          pip install build twine
           python -m build
+          twine check dist/*
 
       - name: Verify build artifacts
         run: |

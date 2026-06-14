@@ -2,6 +2,8 @@
 
 import json
 
+from metadata_remover.metadata import extract_gps_location
+
 MAX_VALUE_LENGTH = 60
 
 
@@ -26,6 +28,8 @@ def format_table(filename, metadata):
     if not metadata:
         return f"\nFile: {filename}\n  (no metadata found)\n"
     
+    gps = extract_gps_location(metadata)
+    
     key_width = max(len(str(k)) for k in metadata.keys())
     key_width = max(key_width, 3)
     
@@ -34,6 +38,12 @@ def format_table(filename, metadata):
     
     lines = []
     lines.append(f"\nFile: {filename}")
+    
+    if gps:
+        lines.append(f"  📍 Location: {gps['latitude']}, {gps['longitude']}")
+        lines.append(f"  🗺️  Maps: {gps['maps_link']}")
+        lines.append("")
+    
     lines.append("\u250c" + "\u2500" * (key_width + 2) + "\u252c" + "\u2500" * (val_width + 2) + "\u2510")
     lines.append(
         "\u2502 " + "Key".ljust(key_width) + " \u2502 " + "Value".ljust(val_width) + " \u2502"
@@ -60,7 +70,13 @@ def format_json(filename, metadata):
     Returns:
         JSON string
     """
-    return json.dumps({"file": str(filename), "metadata": metadata}, indent=2, ensure_ascii=False)
+    gps = extract_gps_location(metadata)
+    
+    result = {"file": str(filename), "metadata": metadata}
+    if gps:
+        result["location"] = gps
+    
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 def format_removal_table(filename, metadata):

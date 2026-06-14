@@ -298,7 +298,13 @@ def main_read(args):
             metadata = read_metadata(src, category)
 
             if args.json:
-                json_results.append({"file": str(src), "metadata": metadata})
+                import json
+                from metadata_remover.metadata import extract_gps_location
+                result = {"file": str(src), "metadata": metadata}
+                gps = extract_gps_location(metadata)
+                if gps:
+                    result["location"] = gps
+                json_results.append(result)
             else:
                 print(format_table(src, metadata))
 

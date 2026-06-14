@@ -220,6 +220,17 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Changelog
 
+### v1.5.0 (2026-06-14)
+- Added GPS location extraction with consolidated coordinates in decimal format
+- Display Google Maps link for photos with GPS data
+- Enhanced `read` command output with location summary
+- Added `location` field to JSON output with latitude, longitude, and maps link
+
+### v1.4.0 (2026-06-14)
+- Improved README with badges, multi-platform installation, and real output examples
+- Added comprehensive changelog
+- Enhanced documentation with quick start guide
+
 ### v1.3.0 (2026-06-14)
 - Added `--report` flag to `clean` command to show metadata removal tables
 - Added total metadata fields removed count in summary

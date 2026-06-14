@@ -1,6 +1,7 @@
 """Metadata reading functions for images and videos."""
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -23,6 +24,70 @@ STRUCTURAL_VIDEO_KEYS = {
     "format_long_name", "start_time", "duration", "size",
     "bit_rate", "probe_score",
 }
+
+
+def parse_gps_coordinate(coord_str, ref):
+    """Parse GPS coordinate from exiftool format to decimal degrees.
+    
+    Args:
+        coord_str: Coordinate string like "40 deg 42' 46.08\" N"
+        ref: Reference like "North" or "South"
+        
+    Returns:
+        Decimal degrees as float, or None if parsing fails
+    """
+    if not coord_str:
+        return None
+    
+    try:
+        match = re.search(r'(\d+)\s+deg\s+(\d+)\'\s+([\d.]+)"', coord_str)
+        if not match:
+            return None
+        
+        degrees = float(match.group(1))
+        minutes = float(match.group(2))
+        seconds = float(match.group(3))
+        
+        decimal = degrees + (minutes / 60) + (seconds / 3600)
+        
+        if ref and ref.lower() in ['south', 'west']:
+            decimal = -decimal
+        
+        return round(decimal, 6)
+    except (ValueError, AttributeError):
+        return None
+
+
+def extract_gps_location(metadata):
+    """Extract GPS location from metadata and return as dict.
+    
+    Args:
+        metadata: Dict of metadata key-value pairs
+        
+    Returns:
+        Dict with 'latitude', 'longitude', 'maps_link' or None if no GPS
+    """
+    lat_str = metadata.get('GPSLatitude')
+    lat_ref = metadata.get('GPSLatitudeRef')
+    lon_str = metadata.get('GPSLongitude')
+    lon_ref = metadata.get('GPSLongitudeRef')
+    
+    if not lat_str or not lon_str:
+        return None
+    
+    lat = parse_gps_coordinate(lat_str, lat_ref)
+    lon = parse_gps_coordinate(lon_str, lon_ref)
+    
+    if lat is None or lon is None:
+        return None
+    
+    maps_link = f"https://www.google.com/maps?q={lat},{lon}"
+    
+    return {
+        'latitude': lat,
+        'longitude': lon,
+        'maps_link': maps_link
+    }
 
 
 def read_image_metadata(path):

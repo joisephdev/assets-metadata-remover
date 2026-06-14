@@ -42,7 +42,7 @@ This creates `/path/to/your_files_clean/` with the same folder structure and met
 #### Options
 
 ```
-usage: assets-metadata-remover clean [-h] [-o OUTPUT] [--dry-run] [-v] [--verify] input
+usage: assets-metadata-remover clean [-h] [-o OUTPUT] [--dry-run] [-v] [--verify] [--report] input
 
 positional:
   input              Directory (or file) to process
@@ -52,6 +52,7 @@ options:
   --dry-run          Simulate without writing
   -v, --verbose      Per-file logging
   --verify           Re-inspect copies and report residual metadata
+  --report           Show table of metadata removed from each file
 ```
 
 #### Examples
@@ -72,6 +73,12 @@ Verbose mode with cleanup verification:
 
 ```bash
 assets-metadata-remover clean ~/Photos -v --verify
+```
+
+Show metadata removal report:
+
+```bash
+assets-metadata-remover clean ~/Photos --report
 ```
 
 Process a single file:

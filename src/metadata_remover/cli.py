@@ -7,7 +7,7 @@ from pathlib import Path
 
 from metadata_remover.utils import IMAGE_EXTS, VIDEO_EXTS, check_tools, collect_files
 from metadata_remover.metadata import read_metadata
-from metadata_remover.formatters import format_table, format_json
+from metadata_remover.formatters import format_table, format_json, format_removal_table
 
 
 def parse_args():
@@ -26,6 +26,7 @@ def parse_args():
     clean_parser.add_argument("--dry-run", action="store_true", help="Simulate without writing")
     clean_parser.add_argument("-v", "--verbose", action="store_true", help="Per-file logging")
     clean_parser.add_argument("--verify", action="store_true", help="Re-inspect copies and report residual metadata")
+    clean_parser.add_argument("--report", action="store_true", help="Show table of metadata removed from each file")
 
     args = parser.parse_args()
     if args.command is None:
@@ -118,6 +119,8 @@ def print_summary(stats):
     skip_detail = f"  ({', '.join(skip_parts)})" if skip_parts else ""
     print(f"  \u23ed Skipped:          {stats['skipped']}{skip_detail}")
     print(f"  \u2716 Errors:           {stats['errors']}")
+    if stats.get("total_fields_removed", 0) > 0:
+        print(f"  \U0001F4CA Total metadata fields removed: {stats['total_fields_removed']}")
     print(f"  \U0001F4C1 Output: {stats['output_dir']}")
     print()
 
@@ -169,12 +172,16 @@ def main_clean(args):
         "missing_tool": 0,
         "errors": 0,
         "output_dir": str(output_path),
+        "total_fields_removed": 0,
     }
 
     for src, category in files:
         src_resolved = os.path.realpath(str(src))
 
         if src_resolved.startswith(output_real + os.sep) or src_resolved == output_real:
+            continue
+
+        if src.name.endswith("_original"):
             continue
 
         if category == "unsupported":
@@ -215,6 +222,13 @@ def main_clean(args):
         try:
             dst.parent.mkdir(parents=True, exist_ok=True)
 
+            pre_metadata = None
+            if args.report or args.verbose:
+                try:
+                    pre_metadata = read_metadata(src, category)
+                except Exception:
+                    pass
+
             if args.verbose:
                 print(f"  CLEANING: {src} -> {dst}")
 
@@ -224,6 +238,10 @@ def main_clean(args):
             else:
                 clean_video(src, dst)
                 stats["videos_cleaned"] += 1
+
+            if pre_metadata and (args.report or args.verbose):
+                print(format_removal_table(src, pre_metadata))
+                stats["total_fields_removed"] += len(pre_metadata)
 
             if args.verify:
                 residual = verify_clean(dst, category, tools)
